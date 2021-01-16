@@ -15,7 +15,8 @@ use \Rainbow\Lib\AutoTranslate;
 use \Rainbow\Lib\ChineseToPy;
 use \Rainbow\Autoloader;
 
-class Rainbow {
+class Rainbow
+{
     const VERSION = '1.0.0';
     /**
      * 读取的目录
@@ -35,16 +36,16 @@ class Rainbow {
     /*
      * 语言包文件后缀
      * */
-    public $extension;
+    public $extension = 'php';
     /*
      * 默认生成的语言
      * */
     public $langArr = ['en'];
 
-    public function __construct($dir,$langpackdir)
+    public function __construct($dir, $langpackdir)
     {
-        if(!is_dir($dir)) exit("The read file directory does not exist\n");
-        if(!is_dir($langpackdir)) exit("The language package generated directory does not exist\n");
+        if (!is_dir($dir)) exit("The read file directory does not exist\n");
+        if (!is_dir($langpackdir)) exit("The language package generated directory does not exist\n");
         $this->filedir = $dir;
         $this->langpackdir = $langpackdir;
     }
@@ -53,15 +54,16 @@ class Rainbow {
      * 目录读取
      * @return string //返回目录中所有文件
      * */
-    public function scanDir($filedir){
+    public function scanDir($filedir)
+    {
         $files = array();
-        if(@$handle = opendir($filedir)) { //注意这里要加一个@，不然会有warning错误提示：）
-            while(($file = readdir($handle)) !== false) {
-                if($file != ".." && $file != ".") { //排除根目录；
-                    if(is_dir($filedir."/".$file)) { //如果是子文件夹，就进行递归
-                        $files[$file] = $this->scanDir($filedir."/".$file);
+        if (@$handle = opendir($filedir)) { //注意这里要加一个@，不然会有warning错误提示：）
+            while (($file = readdir($handle)) !== false) {
+                if ($file != ".." && $file != ".") { //排除根目录；
+                    if (is_dir($filedir . "/" . $file)) { //如果是子文件夹，就进行递归
+                        $files[$file] = $this->scanDir($filedir . "/" . $file);
                     } else { //不然就将文件的名字存入数组；
-                        $files[] = $filedir."/".$file;
+                        $files[] = $filedir . "/" . $file;
                     }
 
                 }
@@ -76,7 +78,8 @@ class Rainbow {
     *执行
     *@return bool
     * */
-    public function run(){
+    public function run()
+    {
         $chineseArr = [];
         try {
             $files = $this->scanDir($this->filedir);
@@ -145,7 +148,7 @@ class Rainbow {
             if (!$rHandle) return -2;
 
             $sData = '';
-            while(!feof($rHandle))
+            while (!feof($rHandle))
                 $sData .= fread($rHandle, filesize($sFilename));
             fclose($rHandle);
         }
@@ -153,11 +156,11 @@ class Rainbow {
             $sData = mb_convert_encoding($sData, $sCharset,"UTF-8");
         }*/
         $path_parts = pathinfo($sFilename);
-        if($path_parts['extension'] == 'html'){
+        if ($path_parts['extension'] == 'html') {
             $sData = strip_tags($sData);
-            if(empty($this->extension)) $this->extension = 'php';
-        }else if($path_parts['extension'] == 'js'){
-            if(empty($this->extension)) $this->extension = 'js';
+            if (empty($this->extension)) $this->extension = 'php';
+        } else if ($path_parts['extension'] == 'js') {
+            if (empty($this->extension)) $this->extension = 'js';
         }
         return $sData;
     }
@@ -165,24 +168,28 @@ class Rainbow {
     /*
      * 生成语言包
      * */
-    private function CreateLangPack($data = [],$file_type = 'php'){
+    private function CreateLangPack($data = [], $file_type = 'php')
+    {
         $file_type = strtoupper($file_type);
-        switch($file_type){
+        if (empty($file_type)) {
+            return true;
+        }
+        switch ($file_type) {
             case 'PHP':
-                $langpackfilename = $this->langpackfilename.'.php';
+                $langpackfilename = $this->langpackfilename . '.php';
                 $info = "<?php return " . var_export($data, true) . "; ?>";
                 break;
             case 'JS':
-                $langpackfilename = $this->langpackfilename.'.js';
+                $langpackfilename = $this->langpackfilename . '.js';
                 $info = '';
-                foreach($data as $key => $v){
+                foreach ($data as $key => $v) {
                     $info .= " var $key='$v';";
                     unset($data[$key]);
                 }
                 break;
         }
         unset($data);
-        if(!file_put_contents($this->langpackdir.$langpackfilename,$info)){
+        if (!file_put_contents($this->langpackdir . $langpackfilename, $info)) {
             return false;
         };
         return true;
